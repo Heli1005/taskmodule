@@ -20,7 +20,7 @@ const Header = (props) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
 
     return <>
-        <Box bg="gray.100" px={4}>
+        <Box bg="gray.200" px={4}>
             <Flex h={16} alignItems={"center"} justifyContent={"space-between"}>
                 <IconButton
                     size={"md"}
@@ -61,7 +61,7 @@ const Header = (props) => {
                         <Stack as={"nav"} spacing={4}>
                             {
                                 Links.map((link) =>
-                                    <NavLink key={link.name} to={link.path}>{link.name}</NavLink>
+                                    <NavLink className={'navlink'} key={link.name} to={link.path}>{link.name}</NavLink>
                                 )
                             }
                         </Stack>

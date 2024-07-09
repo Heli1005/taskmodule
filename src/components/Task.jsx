@@ -1,7 +1,12 @@
 import React from "react";
+import TaskList from "./TaskList";
+import {Box} from "@chakra-ui/react";
+
 
 const Task = (props) => {
-  return <div>Task</div>;
+    return <Box bg={'gray.50'} h={'100%'} >
+    <TaskList />
+  </Box>;
 };
 
 export default Task;
