@@ -1,0 +1,7 @@
+.navlink.active{
+    color: teal;
+    font-weight: 700;
+    /* background: teal; */
+    /* padding: 0.5rem 1rem; */
+    /* border-radius: 10%; */
+}
