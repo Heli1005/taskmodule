@@ -5,23 +5,23 @@ import { Box, Input, FormControl, FormLabel, Text } from "@chakra-ui/react";
 import { Field } from "formik";
 import CustomInputLabel from "./CustomInputLabel";
 
-const CustomInput = ({ field, setFieldValue, values }) => <Field component={CutomDateInput} setFieldValue={setFieldValue} values={values} field={field} />
+const CustomInput = ({ field, setFieldValue, values }) => 
+<Field component={CutomDateInput} setFieldValue={setFieldValue} values={values} field={field} />
 
 export default CustomInput;
 
 const CutomDateInput = ({ field, form, setFieldValue, values }) => {
 
     const { touched, errors, handleBlur } = form
+    let isError = (errors && errors[field.id] && touched[field.id])
+    let errorBorder = isError ? `red.500` : `teal.500`
 
     const handleChange = (val) => {
         setFieldValue(field.id, val);
     };
 
-    let isError = (errors && errors[field.id] && touched[field.id])
-    let errorBorder = isError ? `red.500` : `teal.500`
-
     return <>
-        <FormControl>
+        <FormControl my={2}>
             <CustomInputLabel field={field} errors={errors} isError={isError} />
             <Box>
                 <DateTime

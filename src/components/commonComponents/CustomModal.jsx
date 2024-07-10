@@ -9,8 +9,8 @@ import {
     Button
 } from '@chakra-ui/react'
 
-const CustomModal = ({ children, title, body, onClose, isOpen, onOpen }) => {
- 
+const CustomModal = ({ children, title, size, body, onClose, isOpen, hideClose, onOpen }) => {
+
     return <>
         {
             children
@@ -21,12 +21,26 @@ const CustomModal = ({ children, title, body, onClose, isOpen, onOpen }) => {
                 :
                 <Button onClick={onOpen}>Open Modal</Button>
         }
-        <Modal size={'lg'} isOpen={isOpen} onClose={onClose}>
+        <Modal size={'lg'} isOpen={isOpen} onClose={onClose} onOverlayClick={false} >
             <ModalOverlay />
             <ModalContent>
-                <ModalHeader>{title}</ModalHeader>
-                <ModalCloseButton />
-                <ModalBody>
+                {
+                    title
+                        ?
+                        <ModalHeader>{title}</ModalHeader>
+                        :
+                        <></>
+                }
+                {
+                    !hideClose
+                    ?
+                    <ModalCloseButton />
+                    :
+                    <></>
+
+
+                }
+                <ModalBody >
                     {body}
                 </ModalBody>
             </ModalContent>

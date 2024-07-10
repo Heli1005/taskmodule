@@ -14,7 +14,7 @@ const FormField = ({ field, form }) => {
     let isError = (errors && errors[field.id] && touched[field.id])
     let errorBorder = isError ? `red.500` : `teal.500`
 
-    return <FormControl>
+    return <FormControl my={2}>
         <CustomInputLabel field={field} errors={errors} isError={isError} />
 
         <Input
