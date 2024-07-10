@@ -2,12 +2,12 @@ import React from "react";
 import { Table, Thead, Tbody, Tr, Th, TableCaption, TableContainer, Text, Box, VStack, Button, Select, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react'
 
 
-const CustomTable = ({ headerlist, tbody }) => {
+const CustomTable = ({ headerlist, tbody, tableCaption }) => {
 
     return <>
         <TableContainer mt={1} p={3}>
             <Table variant='simple'>
-                <TableCaption>Its all about all tasks..</TableCaption>
+                <TableCaption color={'teal.500'}>{tableCaption}</TableCaption>
                 <Thead bg={'teal.500'} rounded={'lg'} >
                     <Tr>
                         {

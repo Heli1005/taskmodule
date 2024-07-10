@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button, Box, useDisclosure, Td, Tr, Menu, MenuButton, MenuList, MenuItem, VStack, Text } from "@chakra-ui/react";
 import CustomTable from "./commonComponents/CustomTable";
 import CustomModal from "./commonComponents/CustomModal";
@@ -9,59 +9,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { addTask, allTasks, removeTask, updateTask } from "./redux/taskSlice";
 import { ChevronDownIcon, DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import FilterTask from "./FilterTask";
+import CustomTimer from "./commonComponents/CustomTimer";
+import { taskHeaderList } from "./data/tasksList";
 
 const TaskList = () => {
     let dispatch = useDispatch()
-    let headerlist = [
-        {
-            id: 'title',
-            name: 'Title',
-            type: 'text',
-            w: '100px'
-        },
-        {
-            id: 'desc',
-            name: 'Description',
-            type: 'text',
-            w: '100px'
-        },
-        {
-            id: 'duedate',
-            name: 'Due Date',
-            type: 'datetime',
-            w: '100px'
-        },
-        {
-            id: 'timer',
-            name: 'Timer',
-            type: 'timer',
-            w: '200px'
-        },
-        {
-            id: 'iscompleted',
-            type: 'radio',
-            w: '100px',
-            values: [
-                {
-                    value: 1,
-                    name: 'Completed',
-                    bg: 'green.500'
-                },
-                {
-                    value: 0,
-                    name: 'Pending',
-                    bg: 'red.500'
-                }
-            ],
-            name: 'Status'
-        },
-        {
-            id: 'action',
-            name: 'Action',
-            type: 'action',
-            w: '100px'
-        }
-    ]
+    let headerlist = taskHeaderList()
 
     let statusFilter = [
         {
@@ -82,11 +35,11 @@ const TaskList = () => {
     ]
     const [allTaskList, setAllTaskList] = UseLocalStorage('tasks', [])
     const [status, setStatus] = useState('all');
-
     const taskData = useSelector(state => state.tasks.taskdata) || []
 
     const handleDelete = async () => {
         await dispatch(removeTask(currentId))
+        await setAllTaskList(taskData.filter(obj=>obj._id!==currentId))
         await onDeleteClose()
         await setCurrentId(null)
     }
@@ -115,11 +68,6 @@ const TaskList = () => {
         setAllTaskList(taskData)
     }, [])
 
-    // ------------------------   timer start   ---------------------------------------------------------------------
-
-    const [remainingTimes, setRemainingTimes] = useState({});
-    const timerRef = useRef(null);
-
     const formatDateTime = (date) => {
         return date.toLocaleString('en-GB', {
             day: '2-digit',
@@ -130,50 +78,12 @@ const TaskList = () => {
         });
     };
 
-    const calculateRemainingTime = (dueDate) => {
-        const now = new Date();
-        const due = new Date(dueDate);
-        return due - now;
-    };
-
-    const updateRemainingTimes = () => {
-        const newRemainingTimes = taskData.reduce((acc, task) => {
-            acc[task._id] = calculateRemainingTime(task.duedate);
-            return acc;
-        }, {});
-        setRemainingTimes(newRemainingTimes);
-    };
-
-    const formatTimeLeft = (milliseconds) => {
-        const totalSeconds = Math.floor(milliseconds / 1000);
-        const days = Math.floor(totalSeconds / (3600 * 24));
-        const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-
-        let d = days ? days + 'd' : ''
-        let h = hours ? hours + 'h' : ''
-        let m = minutes ? (minutes < 10 ? '0' : '') + minutes + 'm' : '00 m'
-        let s = seconds ? (seconds < 10 ? '0' : '') + seconds + 's' : '00 s'
-
-        return `${d} ${h} ${m} ${s}`;
-    };
-
-    useEffect(() => {
-        updateRemainingTimes();
-        timerRef.current = setInterval(updateRemainingTimes, 1000 * 60);
-        setAllTaskList(taskData)
-        return () => clearInterval(timerRef.current);
-    }, [taskData]);
-
     const handleOptionSelect = (val, id) => {
         let tempObj = taskData.find(obj => obj._id === id)
         if (tempObj.iscompleted !== val && tempObj.iscompleted === 0) {
             handleAddEditTask({ ...tempObj, iscompleted: val })
         }
     }
-
-    // --------------------------------   timer end   ---------------------------------------------------------------------
 
     const { isOpen, onOpen, onClose } = useDisclosure()
     const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
@@ -223,6 +133,7 @@ const TaskList = () => {
 
         </Box>
         <CustomTable
+            tableCaption={`Total tasks : ${taskDataMemo.length} (Remaing : ${taskData.filter(obj => obj.iscompleted == 0).length}, Completed : ${taskData.filter(obj => obj.iscompleted == 1).length})`}
             headerlist={headerlist}
             tbody={
                 <>
@@ -270,15 +181,7 @@ const TaskList = () => {
                                                 td.type === 'timer'
                                                     ?
                                                     <Td key={td.id} >
-                                                        <span id={obj._id} ref={!obj.iscompleted ? timerRef : null} >
-                                                            {
-                                                                remainingTimes[obj._id] !== undefined
-                                                                &&
-                                                                (
-                                                                    <Text>{formatTimeLeft(remainingTimes[obj._id])}</Text>
-                                                                )
-                                                            }
-                                                        </span>
+                                                        <CustomTimer obj={obj} taskData={taskData} />
                                                     </Td>
                                                     :
                                                     td.type === 'action'
@@ -289,7 +192,7 @@ const TaskList = () => {
                                                                     {
                                                                         <CustomModal
                                                                             isOpen={currentId === obj._id ? isEditOpen : false}
-                                                                            onOpen={() => handleEditModalOpen(obj._id)}
+                                                                            onOpen={() => !obj.iscompleted && handleEditModalOpen(obj._id)}
                                                                             onClose={handleEditModalClose}
                                                                             title={'Edit Task'}
                                                                             body={

@@ -4,9 +4,6 @@ import { TaskSchema } from "./schemas/TaskSchema";
 import { VStack, Button, Box } from "@chakra-ui/react";
 import CustomInput from "./commonComponents/CustomInput";
 import CutomDateInput from "./commonComponents/CutomDateInput";
-import { useDispatch } from "react-redux";
-import { addTask, updateTask } from "./redux/taskSlice";
-import UseLocalStorage from "./commonComponents/useLocalStorage";
 
 const AddTaskModal = ({ onClose, edittask, handleAddEditTask }) => {
 
@@ -15,13 +12,9 @@ const AddTaskModal = ({ onClose, edittask, handleAddEditTask }) => {
         desc: '',
         duedate: new Date(),
         iscompleted: 0,
-        istimerstart: false,
         ...edittask
     }
-
     
-    const [allTaskList, setAllTaskList] = UseLocalStorage('tasks', [])
-
     let taskObject = {
         title: {
             id: 'title',
@@ -42,8 +35,6 @@ const AddTaskModal = ({ onClose, edittask, handleAddEditTask }) => {
             type: 'date',
         }
     }
-
- 
     
     return <>
         <Formik
