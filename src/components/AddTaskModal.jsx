@@ -14,7 +14,7 @@ const AddTaskModal = ({ onClose, edittask, handleAddEditTask }) => {
         title: '',
         desc: '',
         duedate: new Date(),
-        iscompleted: false,
+        iscompleted: 0,
         istimerstart: false,
         ...edittask
     }

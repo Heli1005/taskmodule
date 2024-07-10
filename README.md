@@ -7,9 +7,12 @@ Libraries :
 
 1. list task (static) done
 2. add task  done
-3. update task
-4. delete task
-5. start timer
+3. update task done
+4. delete task done
+5. start timer done
 6. report dashboard
 7. authentication
 8. toast on success and delete the task
+9. timer in minus (bug)
+10. ref warning
+11. filter 

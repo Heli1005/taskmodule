@@ -1,13 +1,5 @@
 import React from "react";
-import {
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalCloseButton,
-    Button
-} from '@chakra-ui/react'
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton, Button } from '@chakra-ui/react'
 
 const CustomModal = ({ children, title, size, body, onClose, isOpen, hideClose, onOpen }) => {
 
@@ -19,9 +11,9 @@ const CustomModal = ({ children, title, size, body, onClose, isOpen, hideClose, 
                     {children}
                 </span>
                 :
-                <Button onClick={onOpen}>Open Modal</Button>
+                <Button onClick={onOpen}>Open </Button>
         }
-        <Modal size={'lg'} isOpen={isOpen} onClose={onClose} onOverlayClick={false} >
+        <Modal size={size || 'lg'} isOpen={isOpen} onClose={onClose} onOverlayClick={false} >
             <ModalOverlay />
             <ModalContent>
                 {
@@ -33,12 +25,10 @@ const CustomModal = ({ children, title, size, body, onClose, isOpen, hideClose, 
                 }
                 {
                     !hideClose
-                    ?
-                    <ModalCloseButton />
-                    :
-                    <></>
-
-
+                        ?
+                        <ModalCloseButton />
+                        :
+                        <></>
                 }
                 <ModalBody >
                     {body}

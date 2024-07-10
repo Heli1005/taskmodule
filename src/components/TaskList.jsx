@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Box, useDisclosure, Td, Tr, Menu, MenuButton, MenuList, MenuItem, VStack, Text } from "@chakra-ui/react";
 import CustomTable from "./commonComponents/CustomTable";
 import CustomModal from "./commonComponents/CustomModal";
@@ -8,6 +8,7 @@ import UseLocalStorage from "./commonComponents/useLocalStorage";
 import { useDispatch, useSelector } from "react-redux";
 import { addTask, allTasks, removeTask, updateTask } from "./redux/taskSlice";
 import { ChevronDownIcon, DeleteIcon, EditIcon } from "@chakra-ui/icons";
+import FilterTask from "./FilterTask";
 
 const TaskList = () => {
     let dispatch = useDispatch()
@@ -42,12 +43,12 @@ const TaskList = () => {
             w: '100px',
             values: [
                 {
-                    value: true,
+                    value: 1,
                     name: 'Completed',
                     bg: 'green.500'
                 },
                 {
-                    value: false,
+                    value: 0,
                     name: 'Pending',
                     bg: 'red.500'
                 }
@@ -62,14 +63,32 @@ const TaskList = () => {
         }
     ]
 
+    let statusFilter = [
+        {
+            id: 'all',
+            name: "All",
+            value: 'all',
+        },
+        {
+            id: 'completed',
+            name: "Completed",
+            value: 1,
+        },
+        {
+            id: 'incomplete',
+            name: "Incomplete",
+            value: 0,
+        }
+    ]
     const [allTaskList, setAllTaskList] = UseLocalStorage('tasks', [])
+    const [status, setStatus] = useState('all');
+
     const taskData = useSelector(state => state.tasks.taskdata) || []
 
     const handleDelete = async () => {
         await dispatch(removeTask(currentId))
         await onDeleteClose()
         await setCurrentId(null)
-
     }
     const handleOpenModal = (id) => {
         setCurrentId(id);
@@ -85,6 +104,7 @@ const TaskList = () => {
         setCurrentId(id)
         onEditOpen()
     }
+
     const handleEditModalClose = () => {
         setCurrentId(null)
         onEditClose()
@@ -94,7 +114,6 @@ const TaskList = () => {
         dispatch(allTasks(allTaskList))
         setAllTaskList(taskData)
     }, [])
-
 
     // ------------------------   timer start   ---------------------------------------------------------------------
 
@@ -110,6 +129,7 @@ const TaskList = () => {
             minute: '2-digit'
         });
     };
+
     const calculateRemainingTime = (dueDate) => {
         const now = new Date();
         const due = new Date(dueDate);
@@ -148,12 +168,12 @@ const TaskList = () => {
 
     const handleOptionSelect = (val, id) => {
         let tempObj = taskData.find(obj => obj._id === id)
-        if (tempObj.iscompleted !== val && tempObj.iscompleted === false) {
+        if (tempObj.iscompleted !== val && tempObj.iscompleted === 0) {
             handleAddEditTask({ ...tempObj, iscompleted: val })
         }
     }
 
-    // ------------------------   timer end   ---------------------------------------------------------------------
+    // --------------------------------   timer end   ---------------------------------------------------------------------
 
     const { isOpen, onOpen, onClose } = useDisclosure()
     const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
@@ -176,9 +196,21 @@ const TaskList = () => {
         }
         await setAllTaskList([...allTaskList, req])
     }
+    const handleFilter = (e) => {
+        setStatus(e.target.value)
+    }
+
+    const taskDataMemo = useMemo(() => {
+
+        let tempdata = status === 'all' ? taskData : taskData.filter(obj => obj.iscompleted == status)
+
+        return tempdata
+    }, [status, taskData])
 
     return <>
-        <Box display={'flex'} w={'full'} px={3} mt={3} justifyContent={'end'} >
+        <Box display={'flex'} w={'full'} px={3} gap={5} mt={3} justifyContent={'end'} >
+            <FilterTask status={status} datalist={statusFilter} handleFilter={handleFilter} />
+
             <CustomModal
                 isOpen={isOpen}
                 onOpen={onOpen}
@@ -188,13 +220,14 @@ const TaskList = () => {
             >
                 <Button colorScheme="teal">Add Task</Button>
             </CustomModal>
+
         </Box>
         <CustomTable
             headerlist={headerlist}
             tbody={
                 <>
                     {
-                        taskData.map((obj, dataindex) => {
+                        taskDataMemo.map((obj, dataindex) => {
                             return <Tr key={dataindex}>
                                 {
                                     headerlist.map(td => {
@@ -204,6 +237,8 @@ const TaskList = () => {
                                                 td.values.find(val => val.value === obj[td.id])
                                                 :
                                                 null
+                                        console.log("radiotypeObj", radiotypeObj);
+
                                         return td.type === 'datetime'
                                             ?
                                             <Td key={td.id}>{formatDateTime(new Date(obj[td.id]))}</Td>
@@ -212,7 +247,7 @@ const TaskList = () => {
                                                 ?
                                                 <Td key={td.id}>
                                                     <Menu>
-                                                        <MenuButton as={Button} cursor={obj.iscompleted ? 'not-allowed' : 'pointer'} bg={radiotypeObj.bg} py={1.5} px={2} fontSize={12} fontWeight={'bold'} rounded={'md'} color={'white'} colorScheme={radiotypeObj.bg} rightIcon={<ChevronDownIcon />}>
+                                                        <MenuButton as={Button} cursor={obj.iscompleted ? 'not-allowed' : 'pointer'} bg={radiotypeObj?.bg} py={1.5} px={2} fontSize={12} fontWeight={'bold'} rounded={'md'} color={'white'} colorScheme={radiotypeObj.bg} rightIcon={<ChevronDownIcon />}>
                                                             <Text as={'span'}>
                                                                 {radiotypeObj.name}
                                                             </Text>
@@ -222,7 +257,7 @@ const TaskList = () => {
                                                             <MenuList>
                                                                 {
                                                                     td.values.map(val => {
-                                                                        return <MenuItem onClick={() => handleOptionSelect(val.value, obj._id)}>
+                                                                        return <MenuItem key={td.id + val.name} onClick={() => handleOptionSelect(val.value, obj._id)}>
                                                                             {val.name}
                                                                         </MenuItem>
                                                                     })
@@ -271,15 +306,15 @@ const TaskList = () => {
                                                                         isOpen={isDeleteOpen}
                                                                         onOpen={() => handleOpenModal(obj._id)}
                                                                         hideClose={true}
-                                                                        size={'sm'}
+                                                                        size="sm"
                                                                         body={
                                                                             <VStack>
                                                                                 <Box display={'flex'} h={'120px'} justifyContent={'center'} alignItems={'center'}>
-                                                                                    <Text fontSize={'20px'} fontWeight={'bold'} color={'teal.600'} >
+                                                                                    <Text casing={'capitalize'} align={'center'} fontSize={'20px'} fontWeight={'bold'} color={'teal.600'} >
                                                                                         Are you sure you want to delete the task ?
                                                                                     </Text>
                                                                                 </Box>
-                                                                                <Box mb={2} w={'full'} display={'flex'} justifyContent={'center'} gap={7}>
+                                                                                <Box mb={2} w={'full'} display={'flex'} justifyContent={'center'} gap={4}>
                                                                                     <Button onClick={() => handleDelete()} w={'30%'} py={5} bg="red.600"
                                                                                         color="white"
                                                                                         _hover={{ bg: 'red.700' }}>Remove </Button>
@@ -291,12 +326,6 @@ const TaskList = () => {
                                                                         <DeleteIcon boxSize={5} cursor={'pointer'} _hover={{ color: "red.500" }} color="red.300" m={1} />
                                                                     </CustomModal>
                                                                 </CutomToolTip>
-
-                                                                {/* <CutomToolTip label={'Pause'} >
-                                                                    <Text>
-                                                                        <Icon as={MdPause} boxSize={5} cursor={'pointer'} _hover={{ color: "teal.500" }} color="teal.300" m={1} />
-                                                                    </Text>
-                                                                </CutomToolTip> */}
                                                             </Box>
                                                         </Td>
                                                         :
