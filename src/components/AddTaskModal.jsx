@@ -5,19 +5,21 @@ import { VStack, Button, Box } from "@chakra-ui/react";
 import CustomInput from "./commonComponents/CustomInput";
 import CutomDateInput from "./commonComponents/CutomDateInput";
 import { useDispatch } from "react-redux";
-import { addTask } from "./redux/taskSlice";
+import { addTask, updateTask } from "./redux/taskSlice";
 import UseLocalStorage from "./commonComponents/useLocalStorage";
 
-let initialState = {
-    title: '',
-    desc: '',
-    duedate: new Date(),
-    iscompleted: false,
-    isLoading: false
-}
+const AddTaskModal = ({ onClose, edittask, handleAddEditTask }) => {
 
-const AddTaskModal = ({ onClose }) => {
-    const dispatch = useDispatch()
+    let initialState = {
+        title: '',
+        desc: '',
+        duedate: new Date(),
+        iscompleted: false,
+        istimerstart: false,
+        ...edittask
+    }
+
+    
     const [allTaskList, setAllTaskList] = UseLocalStorage('tasks', [])
 
     let taskObject = {
@@ -41,31 +43,15 @@ const AddTaskModal = ({ onClose }) => {
         }
     }
 
-    const handleAddTask = async (obj) => {
-        obj['isLoading'] = true
-        let req = { ...obj }
-        req.duedate = req.duedate.toString()
-        delete req.isLoading
-
-        await dispatch(addTask(req))
-        await setAllTaskList([...allTaskList,req])
-        onClose()
-
-        obj['isLoading'] = false
-    }
-
-    const handleCancel = () => {
-        onClose()
-    }
+ 
+    
     return <>
         <Formik
             initialValues={initialState}
             validationSchema={TaskSchema}
             onSubmit={(values, actions) => {
-                const timestamp = new Date().getTime();
-                let tempObj = { ...values, _id: timestamp, timer: 0 }
-                handleAddTask(tempObj)
-
+                let tempobj = { ...values }
+                    handleAddEditTask(tempobj)
             }}
         >
             {
@@ -76,10 +62,10 @@ const AddTaskModal = ({ onClose }) => {
                             <CustomInput field={taskObject.desc} />
                             <CutomDateInput field={taskObject.duedate} setFieldValue={setFieldValue} values={values} />
                             <Box w={'full'} my={4} gap={3} display={'flex'} justifyContent={'center'} >
-                                <Button type="submit" w={'30%'} py={5} bg="teal.600" isLoading={values['isLoading'] || false}
+                                <Button type="submit" w={'30%'} py={5} bg="teal.600"  
                                     color="white"
-                                    _hover={{ bg: 'teal.700' }}>Add </Button>
-                                <Button variant='solid' w={'30%'} py={5} bg="gray.200" color={'black'} onClick={handleCancel}>Cancel</Button>
+                                    _hover={{ bg: 'teal.700' }}>{initialState._id ? 'Edit' : 'Add'} </Button>
+                                <Button variant='solid' w={'30%'} py={5} bg="gray.200" color={'black'} onClick={onClose}>Cancel</Button>
                             </Box>
                         </VStack>
                     </Form>
