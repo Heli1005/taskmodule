@@ -1,21 +1,25 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, Box, useDisclosure, Td, Tr, Menu, MenuButton, MenuList, MenuItem, VStack, Text, useToast } from "@chakra-ui/react";
+import { Button, Box, useDisclosure, Td, Tr, Menu, MenuButton, MenuList, MenuItem, VStack, Text, useToast, Tbody } from "@chakra-ui/react";
 import CustomTable from "./commonComponents/CustomTable";
 import CustomModal from "./commonComponents/CustomModal";
 import CutomToolTip from "./commonComponents/CutomToolTip";
 import AddTaskModal from "./AddTaskModal";
 import UseLocalStorage from "./commonComponents/useLocalStorage";
 import { useDispatch, useSelector } from "react-redux";
-import { addTask, allTasks, removeTask, updateTask } from "./redux/taskSlice";
-import { ChevronDownIcon, DeleteIcon, EditIcon } from "@chakra-ui/icons";
+import { addTask, updateTask } from "./redux/taskSlice";
+import { ChevronDownIcon, EditIcon } from "@chakra-ui/icons";
 import FilterTask from "./FilterTask";
 import CustomTimer from "./commonComponents/CustomTimer";
 import { taskHeaderList } from "./data/tasksList";
 import { useAuth } from "./authenctication/useAuthentication";
+import { SortableContainer, SortableElement, SortableHandle } from 'react-sortable-hoc';
+import DeleteTaskModal from "./DeleteTaskModal";
+import { DragHandleIcon } from "@chakra-ui/icons";
 
 const TaskList = () => {
     let dispatch = useDispatch()
     let headerlist = taskHeaderList()
+    const toast = useToast()
 
     let statusFilter = [
         {
@@ -34,34 +38,18 @@ const TaskList = () => {
             value: 0,
         }
     ]
+
     const [allTaskList, setAllTaskList] = UseLocalStorage('tasks', [])
     const [status, setStatus] = useState('all');
     const { user } = useAuth()
     const taskData = useSelector(state => state.tasks.taskdata) || []
-    const toast = useToast()
+    const [sortedTaskList, setSortedTaskList] = useState(taskData);
+    
 
-    const handleDelete = async () => {
-
-        await dispatch(removeTask(currentId))
-        await setAllTaskList(taskData?.filter(obj => obj._id !== currentId)||[])
-        await onDeleteClose()
-        await setCurrentId(null)
-        await toast({
-            title: 'Task Removed Successfully',
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
-        })
-    }
     const handleOpenModal = (id) => {
         setCurrentId(id);
         onDeleteOpen();
     };
-
-    const handleCancel = () => {
-        setCurrentId(null)
-        onDeleteClose()
-    }
 
     const handleEditModalOpen = (id) => {
         setCurrentId(id)
@@ -72,11 +60,6 @@ const TaskList = () => {
         setCurrentId(null)
         onEditClose()
     }
-
-    // useEffect(() => {
-    //     dispatch(allTasks(allTaskList))
-    //     setAllTaskList(taskData)
-    // }, [])
 
     const formatDateTime = (date) => {
         return date.toLocaleString('en-GB', {
@@ -89,7 +72,7 @@ const TaskList = () => {
     };
 
     const handleOptionSelect = (val, id) => {
-        let tempObj = taskData.find(obj => obj._id === id)
+        let tempObj = sortedTaskList.find(obj => obj._id === id)
         if (tempObj.iscompleted !== val && tempObj.iscompleted === 0) {
             handleAddEditTask({ ...tempObj, iscompleted: val })
         }
@@ -135,11 +118,125 @@ const TaskList = () => {
 
     const taskDataMemo = useMemo(() => {
 
-        let tempdata = status === 'all' ? taskData : taskData.filter(obj => obj.iscompleted == status)
+        let tempdata = status === 'all' ? sortedTaskList : sortedTaskList.filter(obj => obj.iscompleted == status)
         tempdata = tempdata?.filter(obj => obj.userid === user._id)
 
         return tempdata
-    }, [status, taskData])
+    }, [status, sortedTaskList])
+    
+    useEffect(()=>{
+        
+        setSortedTaskList(taskData)
+    },[taskData])
+
+    // ------------------------  drag and drop start  ------------------------------------------------
+    // Define the drag handle component
+    const DragHandle = SortableHandle(() => <DragHandleIcon cursor="grab" />);
+
+    const SortableItem = SortableElement(({ item, index }) => (
+        <Tr key={index}>
+            {
+                headerlist.map(td => {
+                    let radiotypeObj =
+                        td.type === 'radio'
+                            ?
+                            td.values.find(val => val.value === item[td.id])
+                            :
+                            null
+
+                    return td.type === 'dragicon'
+                    ?
+                        <Td key={td.id}><DragHandle /></Td>
+                    :
+                    td.type === 'datetime'
+                        ?
+                       
+                        <Td key={td.id}>{formatDateTime(new Date(item[td.id]))}</Td>
+                        :
+                        td.type === 'radio'
+                            ?
+                            <Td key={td.id}>
+                                <Menu>
+                                    <MenuButton as={Button} cursor={item.iscompleted ? 'not-allowed' : 'pointer'} bg={radiotypeObj?.bg} py={1.5} px={2} fontSize={12} fontWeight={'bold'} rounded={'md'} color={'white'} colorScheme={radiotypeObj.bg} rightIcon={<ChevronDownIcon />}>
+                                        <Text as={'span'}>
+                                            {radiotypeObj.name}
+                                        </Text>
+                                    </MenuButton>
+                                    {
+                                        !radiotypeObj.value &&
+                                        <MenuList>
+                                            {
+                                                td.values.map(val => {
+                                                    return <MenuItem key={td.id + val.name} onClick={() => handleOptionSelect(val.value, item._id)}>
+                                                        {val.name}
+                                                    </MenuItem>
+                                                })
+                                            }
+                                        </MenuList>
+                                    }
+                                </Menu>
+                            </Td>
+                            :
+                            td.type === 'timer'
+                                ?
+                                <Td key={td.id} >
+                                    <CustomTimer obj={item} taskData={sortedTaskList} />
+                                </Td>
+                                :
+                                td.type === 'action'
+                                    ?
+                                    <Td key={td.id}>
+                                        <Box display={'flex'} gap={3} >
+                                            <CutomToolTip label={'Edit'} >
+                                                {
+                                                    <CustomModal
+                                                        isOpen={currentId === item._id ? isEditOpen : false}
+                                                        onOpen={() => !item.iscompleted && handleEditModalOpen(item._id)}
+                                                        onClose={handleEditModalClose}
+                                                        title={'Edit Task'}
+                                                        body={
+                                                            <AddTaskModal onClose={handleEditModalClose} edittask={item} handleAddEditTask={handleAddEditTask} />
+                                                        }
+                                                    >
+                                                        <EditIcon boxSize={5} cursor={item.iscompleted ? 'not-allowed' : 'pointer'} _hover={{ color: item.iscompleted ? "gray.400" : "teal.500" }} color={item.iscompleted ? "gray.400" : "teal.300"} m={1} />
+                                                    </CustomModal>
+                                                }
+                                            </CutomToolTip>
+                                            <DeleteTaskModal isDeleteOpen={isDeleteOpen} item={item} handleOpenModal={handleOpenModal} currentId={currentId} setCurrentId={setCurrentId} onDeleteClose={onDeleteClose} />
+                                        </Box>
+                                    </Td>
+                                    :
+                                    <Td key={td.id}>{item[td.id] || '-'}</Td>
+                }
+                )
+            }
+        </Tr>
+    ));
+
+    const SortableList = SortableContainer(({ items }) => (
+        <Tbody>
+            {items.map((item, index) => (
+                <SortableItem key={`item-${item.id}`} index={index} item={item} />
+            ))}
+        </Tbody>
+    ));
+
+    const onSortEnd = ({ oldIndex, newIndex }) => {
+        
+        setSortedTaskList((oldItems) => {
+            
+            const newItems = [...oldItems];
+            const [movedItem] = newItems.splice(oldIndex, 1);
+            newItems.splice(newIndex, 0, movedItem);
+            return newItems;
+        });
+    };
+    useEffect(() => {
+        setAllTaskList(sortedTaskList)
+    }, [sortedTaskList])
+
+    // ------------------------  drag and drop end  ------------------------------------------------
+
 
     return <>
         <Box display={'flex'} mt={4} alignItems={'center'} justifyContent={'space-between'} >
@@ -147,7 +244,6 @@ const TaskList = () => {
             <Text ml={5} color={'teal.600'} fontWeight={'bold'} fontSize={'1.5rem'}  >{'Task'}</Text>
             <Box display={'flex'} w={'full'} px={3} gap={5} justifyContent={'end'} >
                 <FilterTask status={status} datalist={statusFilter} handleFilter={handleFilter} />
-
                 <CustomModal
                     isOpen={isOpen}
                     onOpen={onOpen}
@@ -161,7 +257,7 @@ const TaskList = () => {
             </Box>
         </Box>
         <CustomTable
-            tableCaption={`Total tasks : ${taskDataMemo?.length} (Remaing : ${taskData?.filter(obj => obj.iscompleted == 0)?.length}, Completed : ${taskData?.filter(obj => obj.iscompleted == 1)?.length})`}
+            tableCaption={`Total tasks : ${taskDataMemo?.length} (Remaing : ${sortedTaskList?.filter(obj => obj.iscompleted == 0)?.length}, Completed : ${sortedTaskList?.filter(obj => obj.iscompleted == 1)?.length})`}
             headerlist={headerlist}
             tbody={
                 <>
@@ -173,106 +269,8 @@ const TaskList = () => {
                                     <Text align={'center'} my={20} fontSize={'1.5rem'} color={'gray.400'}>No Task Found</Text>
                                 </Td>
                             </Tr>
-                            :
-                            taskDataMemo.map((obj, dataindex) => {
-                                return <Tr key={dataindex}>
-                                    {
-                                        headerlist.map(td => {
-                                            let radiotypeObj =
-                                                td.type === 'radio'
-                                                    ?
-                                                    td.values.find(val => val.value === obj[td.id])
-                                                    :
-                                                    null
-
-                                            return td.type === 'datetime'
-                                                ?
-                                                <Td key={td.id}>{formatDateTime(new Date(obj[td.id]))}</Td>
-                                                :
-                                                td.type === 'radio'
-                                                    ?
-                                                    <Td key={td.id}>
-                                                        <Menu>
-                                                            <MenuButton as={Button} cursor={obj.iscompleted ? 'not-allowed' : 'pointer'} bg={radiotypeObj?.bg} py={1.5} px={2} fontSize={12} fontWeight={'bold'} rounded={'md'} color={'white'} colorScheme={radiotypeObj.bg} rightIcon={<ChevronDownIcon />}>
-                                                                <Text as={'span'}>
-                                                                    {radiotypeObj.name}
-                                                                </Text>
-                                                            </MenuButton>
-                                                            {
-                                                                !radiotypeObj.value &&
-                                                                <MenuList>
-                                                                    {
-                                                                        td.values.map(val => {
-                                                                            return <MenuItem key={td.id + val.name} onClick={() => handleOptionSelect(val.value, obj._id)}>
-                                                                                {val.name}
-                                                                            </MenuItem>
-                                                                        })
-                                                                    }
-                                                                </MenuList>
-                                                            }
-                                                        </Menu>
-                                                    </Td>
-                                                    :
-                                                    td.type === 'timer'
-                                                        ?
-                                                        <Td key={td.id} >
-                                                            <CustomTimer obj={obj} taskData={taskData} />
-                                                        </Td>
-                                                        :
-                                                        td.type === 'action'
-                                                            ?
-                                                            <Td key={td.id}>
-                                                                <Box display={'flex'} gap={3} >
-                                                                    <CutomToolTip label={'Edit'} >
-                                                                        {
-                                                                            <CustomModal
-                                                                                isOpen={currentId === obj._id ? isEditOpen : false}
-                                                                                onOpen={() => !obj.iscompleted && handleEditModalOpen(obj._id)}
-                                                                                onClose={handleEditModalClose}
-                                                                                title={'Edit Task'}
-                                                                                body={
-                                                                                    <AddTaskModal onClose={handleEditModalClose} edittask={obj} handleAddEditTask={handleAddEditTask} />
-                                                                                }
-                                                                            >
-                                                                                <EditIcon boxSize={5} cursor={obj.iscompleted ? 'not-allowed' : 'pointer'} _hover={{ color: obj.iscompleted ? "gray.400" : "teal.500" }} color={obj.iscompleted ? "gray.400" : "teal.300"} m={1} />
-                                                                            </CustomModal>
-                                                                        }
-                                                                    </CutomToolTip>
-
-                                                                    <CutomToolTip label={'Delete'} bg={'red.500'}>
-                                                                        <CustomModal
-                                                                            isOpen={isDeleteOpen}
-                                                                            onOpen={() => !obj.iscompleted && handleOpenModal(obj._id)}
-                                                                            hideClose={true}
-                                                                            size="sm"
-                                                                            body={
-                                                                                <VStack>
-                                                                                    <Box display={'flex'} h={'120px'} justifyContent={'center'} alignItems={'center'}>
-                                                                                        <Text casing={'capitalize'} align={'center'} fontSize={'20px'} fontWeight={'bold'} color={'teal.600'} >
-                                                                                            Are you sure you want to delete the task ?
-                                                                                        </Text>
-                                                                                    </Box>
-                                                                                    <Box mb={2} w={'full'} display={'flex'} justifyContent={'center'} gap={4}>
-                                                                                        <Button onClick={() => handleDelete()} w={'30%'} py={5} bg="red.600"
-                                                                                            color="white"
-                                                                                            _hover={{ bg: 'red.700' }}>Remove </Button>
-                                                                                        <Button variant='solid' w={'30%'} py={5} bg="gray.200" color={'black'} onClick={handleCancel}>Cancel</Button>
-                                                                                    </Box>
-                                                                                </VStack>
-                                                                            }
-                                                                        >
-                                                                            <DeleteIcon boxSize={5} cursor={obj.iscompleted ? 'not-allowed' : 'pointer'} _hover={{ color: obj.iscompleted ? "gray.400" : "red.500" }} color={obj.iscompleted ? "gray.400" : "red.300"} m={1} />
-                                                                        </CustomModal>
-                                                                    </CutomToolTip>
-                                                                </Box>
-                                                            </Td>
-                                                            :
-                                                            <Td key={td.id}>{obj[td.id] || '-'}</Td>
-                                        }
-                                        )
-                                    }
-                                </Tr>
-                            })
+                            : 
+                            <SortableList items={taskDataMemo} onSortEnd={onSortEnd} useDragHandle />
                     }
                 </>
             }

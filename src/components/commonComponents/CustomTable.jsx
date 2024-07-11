@@ -17,9 +17,9 @@ const CustomTable = ({ headerlist, tbody, tableCaption }) => {
                         }
                     </Tr>
                 </Thead>
-                <Tbody>
+                {/* <Tbody> */}
                     {tbody}
-                </Tbody>
+                {/* </Tbody> */}
             </Table>
         </TableContainer>
     </>;

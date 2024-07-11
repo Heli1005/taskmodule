@@ -1,6 +1,12 @@
 export const taskHeaderList =()=>{
     return [
         {
+            id:'dragableicon',
+            name: '',
+            type: 'dragicon',
+            w: '30px'
+        },
+        {
             id: 'title',
             name: 'Title',
             type: 'text',
