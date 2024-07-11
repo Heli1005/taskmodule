@@ -15,6 +15,7 @@ import Quotes from "./components/Quotes";
 
 const App = () => {
   const { user } = useAuth()
+  
   let dispatch = useDispatch()
   const [allTaskList, setAllTaskList] = UseLocalStorage('tasks', [])
   const taskDatafromRedux = useSelector(state => state.tasks.taskdata)

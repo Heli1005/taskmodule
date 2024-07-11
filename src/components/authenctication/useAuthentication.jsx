@@ -5,7 +5,7 @@ const UserContext = createContext()
 
 const Authentication = ({ children }) => {
 
-    const [currentUser, setCurrentUser] = UseLocalStorage('currentuser', {})
+    const [currentUser, setCurrentUser] = UseLocalStorage('currentuser', null)
     const [user, setUser] = useState(currentUser ? currentUser:null);
 
     const handlLogin = (userObj) => {
