@@ -16,35 +16,38 @@ import { SortableContainer, SortableElement, SortableHandle } from 'react-sortab
 import DeleteTaskModal from "./DeleteTaskModal";
 import { DragHandleIcon } from "@chakra-ui/icons";
 
+let statusFilter = [
+    {
+        id: 'all',
+        name: "All",
+        value: 'all',
+    },
+    {
+        id: 'completed',
+        name: "Completed",
+        value: 1,
+    },
+    {
+        id: 'incomplete',
+        name: "Incomplete",
+        value: 0,
+    }
+]
+
 const TaskList = () => {
     let dispatch = useDispatch()
     let headerlist = taskHeaderList()
     const toast = useToast()
-
-    let statusFilter = [
-        {
-            id: 'all',
-            name: "All",
-            value: 'all',
-        },
-        {
-            id: 'completed',
-            name: "Completed",
-            value: 1,
-        },
-        {
-            id: 'incomplete',
-            name: "Incomplete",
-            value: 0,
-        }
-    ]
 
     const [allTaskList, setAllTaskList] = UseLocalStorage('tasks', [])
     const [status, setStatus] = useState('all');
     const { user } = useAuth()
     const taskData = useSelector(state => state.tasks.taskdata) || []
     const [sortedTaskList, setSortedTaskList] = useState(taskData);
-    
+    const { isOpen, onOpen, onClose } = useDisclosure()
+    const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
+    const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+    const [currentId, setCurrentId] = useState(null);
 
     const handleOpenModal = (id) => {
         setCurrentId(id);
@@ -69,19 +72,14 @@ const TaskList = () => {
             hour: '2-digit',
             minute: '2-digit'
         });
-    };
+    }
 
     const handleOptionSelect = (val, id) => {
-        let tempObj = sortedTaskList.find(obj => obj._id === id)
+        let tempObj = sortedTaskList?.find(obj => obj._id === id)
         if (tempObj.iscompleted !== val && tempObj.iscompleted === 0) {
             handleAddEditTask({ ...tempObj, iscompleted: val })
         }
     }
-
-    const { isOpen, onOpen, onClose } = useDisclosure()
-    const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
-    const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-    const [currentId, setCurrentId] = useState(null);
 
     const handleAddEditTask = async (obj) => {
 
@@ -112,9 +110,6 @@ const TaskList = () => {
         }
         await setAllTaskList([...allTaskList, req])
     }
-    const handleFilter = (e) => {
-        setStatus(e.target.value)
-    }
 
     const taskDataMemo = useMemo(() => {
 
@@ -123,11 +118,11 @@ const TaskList = () => {
 
         return tempdata
     }, [status, sortedTaskList])
-    
-    useEffect(()=>{
-        
+
+    useEffect(() => {
+
         setSortedTaskList(taskData)
-    },[taskData])
+    }, [taskData])
 
     // ------------------------  drag and drop start  ------------------------------------------------
     // Define the drag handle component
@@ -145,70 +140,68 @@ const TaskList = () => {
                             null
 
                     return td.type === 'dragicon'
-                    ?
-                        <Td key={td.id}><DragHandle /></Td>
-                    :
-                    td.type === 'datetime'
                         ?
-                       
-                        <Td key={td.id}>{formatDateTime(new Date(item[td.id]))}</Td>
+                        <Td key={td.id}><DragHandle /></Td>
                         :
-                        td.type === 'radio'
+                        td.type === 'datetime'
                             ?
-                            <Td key={td.id}>
-                                <Menu>
-                                    <MenuButton as={Button} cursor={item.iscompleted ? 'not-allowed' : 'pointer'} bg={radiotypeObj?.bg} py={1.5} px={2} fontSize={12} fontWeight={'bold'} rounded={'md'} color={'white'} colorScheme={radiotypeObj.bg} rightIcon={<ChevronDownIcon />}>
-                                        <Text as={'span'}>
-                                            {radiotypeObj.name}
-                                        </Text>
-                                    </MenuButton>
-                                    {
-                                        !radiotypeObj.value &&
-                                        <MenuList>
-                                            {
-                                                td.values.map(val => {
-                                                    return <MenuItem key={td.id + val.name} onClick={() => handleOptionSelect(val.value, item._id)}>
-                                                        {val.name}
-                                                    </MenuItem>
-                                                })
-                                            }
-                                        </MenuList>
-                                    }
-                                </Menu>
-                            </Td>
+                            <Td key={td.id}>{formatDateTime(new Date(item[td.id]))}</Td>
                             :
-                            td.type === 'timer'
+                            td.type === 'radio'
                                 ?
-                                <Td key={td.id} >
-                                    <CustomTimer obj={item} taskData={sortedTaskList} />
+                                <Td key={td.id}>
+                                    <Menu>
+                                        <MenuButton as={Button} cursor={item.iscompleted ? 'not-allowed' : 'pointer'} bg={radiotypeObj?.bg} py={1.5} px={2} fontSize={12} fontWeight={'bold'} rounded={'md'} color={'white'} colorScheme={radiotypeObj.bg} rightIcon={<ChevronDownIcon />}>
+                                            <Text as={'span'}>
+                                                {radiotypeObj.name}
+                                            </Text>
+                                        </MenuButton>
+                                        {
+                                            !radiotypeObj.value &&
+                                            <MenuList>
+                                                {
+                                                    td.values.map(val => {
+                                                        return <MenuItem key={td.id + val.name} onClick={() => handleOptionSelect(val.value, item._id)}>
+                                                            {val.name}
+                                                        </MenuItem>
+                                                    })
+                                                }
+                                            </MenuList>
+                                        }
+                                    </Menu>
                                 </Td>
                                 :
-                                td.type === 'action'
+                                td.type === 'timer'
                                     ?
-                                    <Td key={td.id}>
-                                        <Box display={'flex'} gap={3} >
-                                            <CutomToolTip label={'Edit'} >
-                                                {
-                                                    <CustomModal
-                                                        isOpen={currentId === item._id ? isEditOpen : false}
-                                                        onOpen={() => !item.iscompleted && handleEditModalOpen(item._id)}
-                                                        onClose={handleEditModalClose}
-                                                        title={'Edit Task'}
-                                                        body={
-                                                            <AddTaskModal onClose={handleEditModalClose} edittask={item} handleAddEditTask={handleAddEditTask} />
-                                                        }
-                                                    >
-                                                        <EditIcon boxSize={5} cursor={item.iscompleted ? 'not-allowed' : 'pointer'} _hover={{ color: item.iscompleted ? "gray.400" : "teal.500" }} color={item.iscompleted ? "gray.400" : "teal.300"} m={1} />
-                                                    </CustomModal>
-                                                }
-                                            </CutomToolTip>
-                                            <DeleteTaskModal isDeleteOpen={isDeleteOpen} item={item} handleOpenModal={handleOpenModal} currentId={currentId} setCurrentId={setCurrentId} onDeleteClose={onDeleteClose} />
-                                        </Box>
+                                    <Td key={td.id} >
+                                        <CustomTimer obj={item} taskData={taskDataMemo} />
                                     </Td>
                                     :
-                                    <Td key={td.id}>{item[td.id] || '-'}</Td>
-                }
-                )
+                                    td.type === 'action'
+                                        ?
+                                        <Td key={td.id}>
+                                            <Box display={'flex'} gap={3} >
+                                                <CutomToolTip label={'Edit'} >
+                                                    {
+                                                        <CustomModal
+                                                            isOpen={currentId === item._id ? isEditOpen : false}
+                                                            onOpen={() => !item.iscompleted && handleEditModalOpen(item._id)}
+                                                            onClose={handleEditModalClose}
+                                                            title={'Edit Task'}
+                                                            body={
+                                                                <AddTaskModal onClose={handleEditModalClose} edittask={item} handleAddEditTask={handleAddEditTask} />
+                                                            }
+                                                        >
+                                                            <EditIcon boxSize={5} cursor={item.iscompleted ? 'not-allowed' : 'pointer'} _hover={{ color: item.iscompleted ? "gray.400" : "teal.500" }} color={item.iscompleted ? "gray.400" : "teal.300"} m={1} />
+                                                        </CustomModal>
+                                                    }
+                                                </CutomToolTip>
+                                                <DeleteTaskModal isDeleteOpen={isDeleteOpen} item={item} handleOpenModal={handleOpenModal} currentId={currentId} setCurrentId={setCurrentId} onDeleteClose={onDeleteClose} />
+                                            </Box>
+                                        </Td>
+                                        :
+                                        <Td key={td.id}>{item[td.id] || '-'}</Td>
+                })
             }
         </Tr>
     ));
@@ -216,15 +209,15 @@ const TaskList = () => {
     const SortableList = SortableContainer(({ items }) => (
         <Tbody>
             {items.map((item, index) => (
-                <SortableItem key={`item-${item.id}`} index={index} item={item} />
+                <SortableItem key={`item-${item._id}`} index={index} item={item} />
             ))}
         </Tbody>
     ));
 
     const onSortEnd = ({ oldIndex, newIndex }) => {
-        
+
         setSortedTaskList((oldItems) => {
-            
+
             const newItems = [...oldItems];
             const [movedItem] = newItems.splice(oldIndex, 1);
             newItems.splice(newIndex, 0, movedItem);
@@ -243,7 +236,7 @@ const TaskList = () => {
 
             <Text ml={5} color={'teal.600'} fontWeight={'bold'} fontSize={'1.5rem'}  >{'Task'}</Text>
             <Box display={'flex'} w={'full'} px={3} gap={5} justifyContent={'end'} >
-                <FilterTask status={status} datalist={statusFilter} handleFilter={handleFilter} />
+                <FilterTask status={status} datalist={statusFilter} handleFilter={(e) => setStatus(e.target.value)} />
                 <CustomModal
                     isOpen={isOpen}
                     onOpen={onOpen}
@@ -269,7 +262,7 @@ const TaskList = () => {
                                     <Text align={'center'} my={20} fontSize={'1.5rem'} color={'gray.400'}>No Task Found</Text>
                                 </Td>
                             </Tr>
-                            : 
+                            :
                             <SortableList items={taskDataMemo} onSortEnd={onSortEnd} useDragHandle />
                     }
                 </>

@@ -26,7 +26,7 @@ const CutomDateInput = ({ field, form, setFieldValue, values }) => {
             <Box>
                 <DateTime
                     errBorder={errorBorder}
-                    value={values[field.id]}
+                    value={new Date(values[field.id])}
                     onChange={handleChange}
                     field={field}
                     id={field.id}

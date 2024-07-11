@@ -13,10 +13,10 @@ Libraries :
 5. start timer done
 6. report dashboard done
 7. authentication done
-8. toast on success and delete the task
+8. toast on success and delete the task done
 9. timer in minus (bug) done
-10. ref warning
 11. filter done
-12. quotes 
+12. quotes  done
+13. drag & drop done
 
  
