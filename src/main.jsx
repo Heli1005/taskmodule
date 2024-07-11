@@ -6,13 +6,16 @@ import { BrowserRouter as Router } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
 import { Provider } from "react-redux";
 import { store } from './components/redux/store.js';
+import Authentication from './components/authenctication/useAuthentication.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Provider store={store}>
       <ChakraProvider>
         <Router>
-          <App />
+          <Authentication>
+            <App />
+          </Authentication>
         </Router>
       </ChakraProvider>
     </Provider>

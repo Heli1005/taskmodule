@@ -28,7 +28,6 @@ const taskSlice = createSlice({
             return state
         },
     },
-     
 })
 
 export const { allTasks,addTask, removeTask, updateTask } = taskSlice.actions;
