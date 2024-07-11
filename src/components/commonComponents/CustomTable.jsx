@@ -5,8 +5,8 @@ import { Table, Thead, Tbody, Tr, Th, TableCaption, TableContainer, Text, Box, V
 const CustomTable = ({ headerlist, tbody, tableCaption }) => {
 
     return <>
-        <TableContainer mt={1} p={3}>
-            <Table variant='simple'>
+        <TableContainer mt={1} p={3} >
+            <Table variant='simple' bg={'gray.100'}>
                 <TableCaption color={'teal.500'}>{tableCaption}</TableCaption>
                 <Thead bg={'teal.500'} rounded={'lg'} >
                     <Tr>

@@ -10,7 +10,7 @@ const AddTaskModal = ({ onClose, edittask, handleAddEditTask }) => {
     let initialState = {
         title: '',
         desc: '',
-        duedate: new Date(),
+        duedate: '',
         iscompleted: 0,
         ...edittask
     }
@@ -41,8 +41,20 @@ const AddTaskModal = ({ onClose, edittask, handleAddEditTask }) => {
             initialValues={initialState}
             validationSchema={TaskSchema}
             onSubmit={(values, actions) => {
+                const errors = {};
                 let tempobj = { ...values }
+                const now = new Date();
+                const dueDate = new Date(values.duedate);
+                if (dueDate < now) {
+                    errors.duedate = 'Due date cannot be in the past';
+                }  
+
+                if (Object.keys(errors)?.length > 0) {
+                    actions.setErrors(errors);
+                } else {
                     handleAddEditTask(tempobj)
+                    actions.resetForm();
+                }
             }}
         >
             {

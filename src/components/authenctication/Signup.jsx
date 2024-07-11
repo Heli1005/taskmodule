@@ -2,18 +2,16 @@ import { Form, Formik } from "formik";
 import React from "react";
 import { useDispatch } from "react-redux";
 import { SignUpSchema } from "../schemas/SignUpSchema";
-import { Box, Button, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, Text, VStack, useToast } from "@chakra-ui/react";
 import CustomInput from "../commonComponents/CustomInput";
-import { addUser } from "../redux/usersSlice";
 import { Link, useNavigate } from "react-router-dom";
 import UseLocalStorage from "../commonComponents/useLocalStorage";
 
 const Signup = (props) => {
 
-    const dispatch = useDispatch()
+    const toast=useToast()
     const navigate = useNavigate()
     const [userList, setUserList] = UseLocalStorage('users', [])
-    // const [currentUser, setCurrentUser] = UseLocalStorage('currentuser', {})
 
     let initialState = {
         username: '',
@@ -32,32 +30,42 @@ const Signup = (props) => {
             id: 'password',
             label: 'Password',
             isrequired: true,
-            type: 'text'
+            type: 'password'
         },
         confirmpassword: {
             id: 'confirmpassword',
             label: 'Confirm Password',
             isrequired: true,
-            type: 'text'
+            type: 'password'
         },
     }
 
-    const handleRegister = (obj) => {
+    const handleRegister = async (obj, actions) => {
 
         const timestamp = new Date().getTime();
         obj['_id'] = timestamp
         delete obj.confirmpassword
         let userExist = userList.find(u => u.username === obj.username) || null
-        console.log("userExist", userExist);
 
         if (!userExist) {
 
-            dispatch(addUser(obj))
             navigate('/login')
             setUserList([...userList, obj])
+            await toast({
+                title: 'User created successfully',
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+            })
+        }else{
+            actions.resetForm();
+            await toast({
+                title: 'Username already exist',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            })
         }
-        // setCurrentUser(obj)
-
     }
 
     return <Box w={'full'} display={'flex'} justifyContent={'center'}  >
@@ -67,10 +75,8 @@ const Signup = (props) => {
                 initialValues={initialState}
                 validationSchema={SignUpSchema}
                 onSubmit={(values, actions) => {
-                    console.log("values", values);
-
                     let tempObj = { ...values }
-                    handleRegister(tempObj)
+                    handleRegister(tempObj, actions)
                 }}
             >
                 <Form>

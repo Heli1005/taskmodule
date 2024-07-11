@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, Box, useDisclosure, Td, Tr, Menu, MenuButton, MenuList, MenuItem, VStack, Text } from "@chakra-ui/react";
+import { Button, Box, useDisclosure, Td, Tr, Menu, MenuButton, MenuList, MenuItem, VStack, Text, useToast } from "@chakra-ui/react";
 import CustomTable from "./commonComponents/CustomTable";
 import CustomModal from "./commonComponents/CustomModal";
 import CutomToolTip from "./commonComponents/CutomToolTip";
@@ -38,12 +38,20 @@ const TaskList = () => {
     const [status, setStatus] = useState('all');
     const { user } = useAuth()
     const taskData = useSelector(state => state.tasks.taskdata) || []
+    const toast = useToast()
 
     const handleDelete = async () => {
+
         await dispatch(removeTask(currentId))
-        await setAllTaskList(taskData.filter(obj => obj._id !== currentId))
+        await setAllTaskList(taskData?.filter(obj => obj._id !== currentId)||[])
         await onDeleteClose()
         await setCurrentId(null)
+        await toast({
+            title: 'Task Removed Successfully',
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+        })
     }
     const handleOpenModal = (id) => {
         setCurrentId(id);
@@ -99,6 +107,12 @@ const TaskList = () => {
         if (obj._id) {
             dispatch(updateTask(req))
             onEditClose()
+            await toast({
+                title: 'Task Updated Successfully',
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+            })
         } else {
             const timestamp = new Date().getTime();
             req['_id'] = timestamp
@@ -106,6 +120,12 @@ const TaskList = () => {
             req['timer'] = 0
             await dispatch(addTask(req))
             onClose()
+            await toast({
+                title: 'Task Added Successfully',
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+            })
         }
         await setAllTaskList([...allTaskList, req])
     }
@@ -116,13 +136,13 @@ const TaskList = () => {
     const taskDataMemo = useMemo(() => {
 
         let tempdata = status === 'all' ? taskData : taskData.filter(obj => obj.iscompleted == status)
-        tempdata=tempdata.filter(obj=>obj.userid === user._id)
+        tempdata = tempdata?.filter(obj => obj.userid === user._id)
 
         return tempdata
     }, [status, taskData])
 
     return <>
-        <Box display={'flex'} mt={2} alignItems={'center'} justifyContent={'space-between'} >
+        <Box display={'flex'} mt={4} alignItems={'center'} justifyContent={'space-between'} >
 
             <Text ml={5} color={'teal.600'} fontWeight={'bold'} fontSize={'1.5rem'}  >{'Task'}</Text>
             <Box display={'flex'} w={'full'} px={3} gap={5} justifyContent={'end'} >
@@ -141,7 +161,7 @@ const TaskList = () => {
             </Box>
         </Box>
         <CustomTable
-            tableCaption={`Total tasks : ${taskDataMemo.length} (Remaing : ${taskData.filter(obj => obj.iscompleted == 0).length}, Completed : ${taskData.filter(obj => obj.iscompleted == 1).length})`}
+            tableCaption={`Total tasks : ${taskDataMemo?.length} (Remaing : ${taskData?.filter(obj => obj.iscompleted == 0)?.length}, Completed : ${taskData?.filter(obj => obj.iscompleted == 1)?.length})`}
             headerlist={headerlist}
             tbody={
                 <>
@@ -222,7 +242,7 @@ const TaskList = () => {
                                                                     <CutomToolTip label={'Delete'} bg={'red.500'}>
                                                                         <CustomModal
                                                                             isOpen={isDeleteOpen}
-                                                                            onOpen={() => handleOpenModal(obj._id)}
+                                                                            onOpen={() => !obj.iscompleted && handleOpenModal(obj._id)}
                                                                             hideClose={true}
                                                                             size="sm"
                                                                             body={
@@ -241,7 +261,7 @@ const TaskList = () => {
                                                                                 </VStack>
                                                                             }
                                                                         >
-                                                                            <DeleteIcon boxSize={5} cursor={'pointer'} _hover={{ color: "red.500" }} color="red.300" m={1} />
+                                                                            <DeleteIcon boxSize={5} cursor={obj.iscompleted ? 'not-allowed' : 'pointer'} _hover={{ color: obj.iscompleted ? "gray.400" : "red.500" }} color={obj.iscompleted ? "gray.400" : "red.300"} m={1} />
                                                                         </CustomModal>
                                                                     </CutomToolTip>
                                                                 </Box>

@@ -11,18 +11,20 @@ const CustomTimer = ({ obj, taskData }) => {
 
     useEffect(() => {
         updateRemainingTimes();
-        timerRef.current = setInterval(updateRemainingTimes, 1000 * 60);
+        timerRef.current = setInterval(updateRemainingTimes, 1000 );
         setAllTaskList(taskData)
         return () => clearInterval(timerRef.current);
     }, [taskData]);
 
     const formatTimeLeft = (milliseconds) => {
         const totalSeconds = Math.floor(milliseconds / 1000);
+        // const weeks = Math.floor(totalSeconds / (3600 *24* 7));
         const days = Math.floor(totalSeconds / (3600 * 24));
         const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
 
+        // let w = weeks ? weeks + 'w' : ''
         let d = days ? days + 'd' : ''
         let h = hours ? hours + 'h' : ''
         let m = minutes ? (minutes < 10 ? '0' : '') + minutes + 'm' : '00 m'
@@ -33,7 +35,8 @@ const CustomTimer = ({ obj, taskData }) => {
 
     const updateRemainingTimes = () => {
         const newRemainingTimes = taskData.reduce((acc, task) => {
-            acc[task._id] = calculateRemainingTime(task.duedate);
+            let time = calculateRemainingTime(task.duedate);
+            acc[task._id] = time<0?0:time
             return acc;
         }, {});
         setRemainingTimes(newRemainingTimes);
@@ -51,7 +54,7 @@ const CustomTimer = ({ obj, taskData }) => {
                 remainingTimes[obj._id] !== undefined
                 &&
                 (
-                    <Text>{formatTimeLeft(remainingTimes[obj._id])}</Text>
+                    <Text color={calculateRemainingTime(obj.duedate)<0?'red.600':'black'} >{formatTimeLeft(remainingTimes[obj._id])}</Text>
                 )
             }
         </span>

@@ -1,4 +1,4 @@
-import { Box, Button, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, Text, VStack, useToast } from "@chakra-ui/react";
 import { Form, Formik } from "formik";
 import React from "react";
 import { LoginSchema } from "../schemas/LoginSchema";
@@ -9,6 +9,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
     const { user, handlLogin } = useAuth()
+    const toast=useToast()
     const [userList, setUserList] = UseLocalStorage('users', [])
     const [currentUser, setCurrentUser] = UseLocalStorage('currentuser', {})
     const navigate = useNavigate()
@@ -29,7 +30,7 @@ const Login = () => {
             id: 'password',
             label: 'Password',
             isrequired: true,
-            type: 'text'
+            type: 'password'
         }
     }
 
@@ -39,7 +40,20 @@ const Login = () => {
             setCurrentUser(userExist)
             handlLogin(userExist)
             navigate('/')
+             toast({
+                title: 'User login successfully',
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+            })
 
+        }else{
+            toast({
+                title: 'User or password invalid',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            })
         }
     }
 
@@ -50,8 +64,6 @@ const Login = () => {
                 initialValues={initialState}
                 validationSchema={LoginSchema}
                 onSubmit={(values, actions) => {
-                    console.log("values", values);
-
                     let tempObj = { ...values }
                     handleLoginBtn(tempObj)
                 }}

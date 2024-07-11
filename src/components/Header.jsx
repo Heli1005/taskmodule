@@ -1,23 +1,24 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Box, Flex, HStack, IconButton, useDisclosure, Stack, Button } from "@chakra-ui/react";
+import { Box, Flex, HStack, IconButton, useDisclosure, Stack, Button, useToast } from "@chakra-ui/react";
 import { HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
 import './Header.css'
 import { useAuth } from "./authenctication/useAuthentication";
 import UseLocalStorage from "./commonComponents/useLocalStorage";
+import { GoTasklist } from "react-icons/go";
 
 const Header = (props) => {
-
+    const toast = useToast()
     const Links = [
         {
             name: "Dashboard",
             path: '/',
-            secure:0
+            secure: 0
         },
         {
             name: "Task",
             path: '/task',
-            secure:1
+            secure: 1
         }
     ];
     const navigate = useNavigate()
@@ -25,15 +26,20 @@ const Header = (props) => {
     const { user, handleLogOut } = useAuth()
     const [currentUser, setCurrentUser] = UseLocalStorage('currentuser', {})
 
-
     const handleLogoutBtn = () => {
         handleLogOut()
         setCurrentUser(null)
         navigate('/')
+        toast({
+            title: 'Log out succesfully',
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+        })
     }
 
     return <>
-        <Box bg="gray.200" px={4} position={'sticky'} top={0}>
+        <Box bg="gray.200" px={4} position={'sticky'} top={0} border={'1px solid white'} zIndex={'1'} shadow={'1px 1px 20px black'}>
             <Flex h={16} alignItems={"center"} justifyContent={"space-between"}>
                 <IconButton
                     size={"md"}
@@ -43,16 +49,10 @@ const Header = (props) => {
                     onClick={isOpen ? onClose : onOpen}
                 />
                 <HStack spacing={8} alignItems={"center"}>
-                    <Box  >Logo</Box>
-                    <HStack
-                        as={"nav"}
-                        spacing={4}
-                        display={{ base: "none", md: "flex" }}
-                    >
+                    <Box color={'white'} fontSize={'3rem'} fontWeight={'900'} bg={'teal.600'} p={1} rounded={'md'} cursor={'pointer'} ><GoTasklist /></Box>
+                    <HStack as={"nav"} spacing={4} display={{ base: "none", md: "flex" }}  >
                         {
-                            Links.filter(obj=>{
-                               return (obj.secure===0 ||user)
-                            }).map((link) =>
+                            Links.filter(obj => (obj.secure === 0 || user)).map((link) =>
                                 <NavLink className={'navlink'} key={link.name} to={link.path} >{link.name}</NavLink>
                             )
                         }
@@ -67,10 +67,6 @@ const Header = (props) => {
                             </Button>
                             :
                             <></>
-
-                            // <Button variant={"solid"} colorScheme={"teal"} onClick={()=>navigate('/login')} size={"sm"} mr={4}  >
-                            //    Log In
-                            // </Button>
                     }
                 </Flex>
             </Flex>

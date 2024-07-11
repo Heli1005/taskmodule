@@ -4,7 +4,7 @@ import {Box} from "@chakra-ui/react";
 
 
 const Task = (props) => {
-    return <Box bg={'gray.50'} h={'100%'} >
+    return <Box   h={'full'} >
     <TaskList />
   </Box>;
 };

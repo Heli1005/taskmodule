@@ -10,28 +10,32 @@ import RegisteredValidation from "./components/authenctication/RegisteredValidat
 import { useDispatch, useSelector } from "react-redux";
 import UseLocalStorage from "./components/commonComponents/useLocalStorage";
 import { allTasks } from "./components/redux/taskSlice";
+import { Box } from "@chakra-ui/react";
+import Quotes from "./components/Quotes";
 
 const App = () => {
-  const { user, handlLogin } = useAuth()
+  const { user } = useAuth()
   let dispatch = useDispatch()
   const [allTaskList, setAllTaskList] = UseLocalStorage('tasks', [])
-  const taskData = useSelector(state => state.tasks.taskdata).filter(obj => obj.userid === user._id)
+  const taskDatafromRedux = useSelector(state => state.tasks.taskdata)
+  const taskData = user? taskDatafromRedux?.filter(obj => obj.userid === user._id): []
 
 
   useEffect(() => {
     dispatch(allTasks(allTaskList))
     setAllTaskList(taskData)
   }, [])
-  
-  return <div className="">
+
+  return <Box className=""  >
     <Header />
+    <Quotes/>
     <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/task" element={<RegisteredValidation ><Task /></RegisteredValidation>} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
     </Routes>
-  </div>;
+  </Box>;
 };
 
 export default App;
